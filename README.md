@@ -32,9 +32,10 @@ https://www.figma.com/design/aBcDeFgHiJkLmNoPqRsT/My-File
 ## Install from source
 
 1. Clone this repo
-2. Open `chrome://extensions`
-3. Enable **Developer mode**
-4. Click **Load unpacked** and select the cloned folder
+2. Run `bun build.js`
+3. Open `chrome://extensions`
+4. Enable **Developer mode**
+5. Click **Load unpacked** and select the `dist/` folder
 
 ## Privacy
 

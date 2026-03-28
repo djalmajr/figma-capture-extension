@@ -11,7 +11,7 @@ describe("esc", () => {
   });
 
   test("escapes quotes and ampersands", () => {
-    expect(esc('"hello" & \'world\'')).toBe('&quot;hello&quot; &amp; \'world\'');
+    expect(esc('"hello" & \'world\'')).toBe('&quot;hello&quot; &amp; &#39;world&#39;');
   });
 
   test("handles empty string", () => {
