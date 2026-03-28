@@ -10,19 +10,7 @@ const ICONS = {
   add: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`,
 };
 
-// --- Helpers ---
-const FILE_KEY_RE = /^[a-zA-Z0-9_-]+$/;
-const HASH = (key) => `#figmacapture=${key}&figmaselector=body`;
-
-function esc(str) {
-  const el = document.createElement("span");
-  el.textContent = str;
-  return el.innerHTML;
-}
-
-function generateId() {
-  return crypto.randomUUID().slice(0, 8);
-}
+import { FILE_KEY_RE, HASH, esc, generateId, cleanHash } from "./helpers.js";
 
 // --- Storage ---
 async function getState() {
@@ -60,9 +48,13 @@ async function clearHash() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    func: () => {
-      const hash = location.hash.replace(/[#&]?figmacapture=[^&]*/g, "").replace(/[#&]?figmaselector=[^&]*/g, "").replace(/^#?&/, "#");
-      const clean = hash === "#" || hash === "" ? "" : hash;
+    func: (cleanFn) => {
+      // cleanHash is inlined since func runs in page context
+      const cleaned = location.hash
+        .replace(/[#&]?figmacapture=[^&]*/g, "")
+        .replace(/[#&]?figmaselector=[^&]*/g, "")
+        .replace(/^#?&/, "#");
+      const clean = cleaned === "#" || cleaned === "" ? "" : cleaned;
       history.replaceState(null, "", location.pathname + location.search + clean);
     },
   });
