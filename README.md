@@ -1,18 +1,18 @@
 # Figma Capture
 
-One-click Chrome extension to capture any web page to Figma using the official [HTML-to-Design](https://www.figma.com/community/plugin/1159123024924461424) capture script.
+Chrome extension that serializes a web page's DOM so you can paste it directly into Figma as editable layers.
 
 ## How it works
 
 1. **Add a Figma file key** — open the popup, enter a label and the file key from your Figma file URL
-2. **Click the icon** — the extension injects the capture script, sets the `#figmacapture` hash, and reloads the page
-3. **Paste in Figma** — open your Figma file and paste (`Ctrl/Cmd+V`)
+2. **Click the icon** — the extension injects Figma's HTML-to-Design capture script, sets the `#figmacapture` hash, and reloads the page
+3. **Paste in Figma** — open your Figma file and paste (`Ctrl/Cmd+V`) to get the page as editable layers
 
-The extension icon shows the Figma logo in **color** when a capture hash is active, and **gray** when idle.
+The capture script serializes the DOM into a format Figma understands and copies it to your clipboard. The extension icon shows the Figma logo in **color** when a capture hash is active, and **gray** when idle.
 
 ## Features
 
-- One-click capture to clipboard (no CORS issues)
+- One-click DOM-to-clipboard capture
 - Multiple Figma file keys with labels
 - Switch active key from settings
 - Visual icon state (color = hash active, gray = idle)
@@ -35,10 +35,6 @@ https://www.figma.com/design/aBcDeFgHiJkLmNoPqRsT/My-File
 2. Open `chrome://extensions`
 3. Enable **Developer mode**
 4. Click **Load unpacked** and select the cloned folder
-
-## Install from Chrome Web Store
-
-Coming soon.
 
 ## Privacy
 
