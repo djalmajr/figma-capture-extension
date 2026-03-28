@@ -9,7 +9,7 @@ async function updateIcon(tabId) {
     const tab = await chrome.tabs.get(tabId);
     const active = tab.url?.includes("figmacapture=");
     chrome.action.setIcon({ tabId, path: active ? COLOR_ICON : GRAY_ICON });
-  } catch {}
+  } catch (e) { console.warn("updateIcon:", e); }
 }
 
 chrome.tabs.onUpdated.addListener((tabId, info) => {

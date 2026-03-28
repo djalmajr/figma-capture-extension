@@ -10,25 +10,31 @@ const ICONS = {
   add: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`,
 };
 
-// --- Capture hash (no figmaendpoint = copy mode) ---
+// --- Helpers ---
+const FILE_KEY_RE = /^[a-zA-Z0-9_-]+$/;
 const HASH = (key) => `#figmacapture=${key}&figmaselector=body`;
 
-// --- Storage ---
+function esc(str) {
+  const el = document.createElement("span");
+  el.textContent = str;
+  return el.innerHTML;
+}
+
 function generateId() {
   return crypto.randomUUID().slice(0, 8);
 }
 
+// --- Storage ---
 async function getState() {
-  const { keys, activeKeyId, showBadge } = await chrome.storage.local.get(["keys", "activeKeyId", "showBadge"]);
-  return { keys: keys || [], activeKeyId: activeKeyId || null, showBadge: showBadge !== false };
+  const { keys, activeKeyId } = await chrome.storage.local.get(["keys", "activeKeyId"]);
+  return { keys: keys || [], activeKeyId: activeKeyId || null };
 }
 
 async function saveKeys(keys, activeKeyId) {
   await chrome.storage.local.set({ keys, activeKeyId });
 }
 
-
-// --- Capture helper ---
+// --- Capture ---
 async function captureTab(fileKey) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   await chrome.scripting.executeScript({
@@ -60,7 +66,6 @@ async function clearHash() {
       history.replaceState(null, "", location.pathname + location.search + clean);
     },
   });
-  chrome.action.setBadgeText({ tabId: tab.id, text: "" });
   window.close();
 }
 
@@ -104,7 +109,6 @@ async function render(scene) {
 
 function renderIdle(state) {
   const activeKey = state.keys.find((k) => k.id === state.activeKeyId);
-  const label = activeKey?.label || "—";
   container.innerHTML = `
     <div class="status status-idle">
       <div class="dot"></div>
@@ -113,7 +117,7 @@ function renderIdle(state) {
     <div class="info-box">
       <div class="info-row">
         <span class="label">Figma File</span>
-        <span class="value">${label}</span>
+        <span class="value">${esc(activeKey?.label || "—")}</span>
       </div>
     </div>
     <div class="spacer"></div>
@@ -133,11 +137,11 @@ function renderFirstUse(state) {
     </div>
     <div class="field">
       <label>Label</label>
-      <input id="inp-label" type="text" placeholder="Ex: Platform" />
+      <input id="inp-label" type="text" placeholder="Ex: Platform" maxlength="50" />
     </div>
     <div class="field">
       <label>Figma File Key</label>
-      <input id="inp-key" type="text" placeholder="Ex: aBcDeFgHiJkLmNoPqRsT" class="mono" />
+      <input id="inp-key" type="text" placeholder="Ex: aBcDeFgHiJkLmNoPqRsT" class="mono" maxlength="50" />
     </div>
     <div class="spacer"></div>
     <button id="btn-save" class="btn-primary">${ICONS.save} Save and capture</button>
@@ -145,7 +149,7 @@ function renderFirstUse(state) {
   container.querySelector("#btn-save").onclick = async () => {
     const label = container.querySelector("#inp-label").value.trim();
     const fileKey = container.querySelector("#inp-key").value.trim();
-    if (!label || !fileKey) return;
+    if (!label || !fileKey || !FILE_KEY_RE.test(fileKey)) return;
     const id = generateId();
     await saveKeys([...state.keys, { id, label, fileKey }], id);
     captureTab(fileKey);
@@ -154,7 +158,6 @@ function renderFirstUse(state) {
 
 function renderActive(state) {
   const activeKey = state.keys.find((k) => k.id === state.activeKeyId);
-  const label = activeKey?.label || "—";
   container.innerHTML = `
     <div class="status status-warning">
       <div class="dot"></div>
@@ -163,7 +166,7 @@ function renderActive(state) {
     <div class="info-box">
       <div class="info-row">
         <span class="label">Figma File</span>
-        <span class="value">${label}</span>
+        <span class="value">${esc(activeKey?.label || "—")}</span>
       </div>
     </div>
     <div class="hint">
@@ -179,20 +182,20 @@ function renderActive(state) {
 
 function renderSettings(state) {
   const keyItems = state.keys.map((k) => `
-    <div class="key-item ${k.id === state.activeKeyId ? "active" : ""}" data-activate="${k.id}">
+    <div class="key-item ${k.id === state.activeKeyId ? "active" : ""}" data-activate="${esc(k.id)}">
       <div class="dot"></div>
-      <span class="name">${k.label}</span>
-      <span class="key">${k.fileKey.slice(0, 6)}...${k.fileKey.slice(-2)}</span>
-      <button class="del" data-delete="${k.id}">${ICONS.del}</button>
+      <span class="name">${esc(k.label)}</span>
+      <span class="key">${esc(k.fileKey.slice(0, 6))}...${esc(k.fileKey.slice(-2))}</span>
+      <button class="del" data-delete="${esc(k.id)}">${ICONS.del}</button>
     </div>`).join("");
 
   container.innerHTML = `
     <div>
       <div class="section-label">Figma Files</div>
-      <div style="display:flex;flex-direction:column;gap:8px">${keyItems}</div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">${keyItems}</div>
       <div class="add-row">
-        <input id="add-label" type="text" placeholder="Label" />
-        <input id="add-key" type="text" placeholder="File key" />
+        <input id="add-label" type="text" placeholder="Label" maxlength="50" />
+        <input id="add-key" type="text" placeholder="File key" maxlength="50" />
         <button id="btn-add">${ICONS.add}</button>
       </div>
       <p class="key-hint">Click a key to activate it. The active key is used when clicking the icon.</p>
@@ -222,7 +225,7 @@ function renderSettings(state) {
   container.querySelector("#btn-add").onclick = async () => {
     const label = container.querySelector("#add-label").value.trim();
     const fileKey = container.querySelector("#add-key").value.trim();
-    if (!label || !fileKey) return;
+    if (!label || !fileKey || !FILE_KEY_RE.test(fileKey)) return;
     const id = generateId();
     await saveKeys([...state.keys, { id, label, fileKey }], state.activeKeyId || id);
     render("settings");
