@@ -13,10 +13,33 @@ async function updateIcon(tabId) {
 }
 
 chrome.tabs.onUpdated.addListener((tabId, info) => {
-  if (info.status === "complete") updateIcon(tabId);
+  if (info.status === "complete") {
+    updateIcon(tabId);
+    injectCaptureScript(tabId);
+  }
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => updateIcon(tabId));
+
+async function injectCaptureScript(tabId) {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (!tab.url?.includes("figmacapture=")) return;
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        if (!document.getElementById("figma-html-to-design-capture")) {
+          const s = document.createElement("script");
+          s.id = "figma-html-to-design-capture";
+          s.src = "https://mcp.figma.com/mcp/html-to-design/capture.js";
+          s.async = true;
+          document.head.appendChild(s);
+        }
+      },
+    });
+  } catch (e) { console.warn("injectCaptureScript:", e); }
+}
 
 // Set gray as default
 chrome.action.setIcon({ path: GRAY_ICON });

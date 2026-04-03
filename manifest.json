@@ -3,7 +3,7 @@
   "name": "Figma Capture",
   "version": "1.0.0",
   "description": "Capture any web page to Figma with one click",
-  "permissions": ["activeTab", "storage", "scripting", "tabs"],
+  "permissions": ["activeTab", "storage", "scripting", "tabs", "declarativeNetRequest"],
   "action": {
     "default_icon": { "16": "icons/icon-16.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
     "default_title": "Figma Capture"

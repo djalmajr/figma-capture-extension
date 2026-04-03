@@ -25,17 +25,28 @@ async function saveKeys(keys, activeKeyId) {
 // --- Capture ---
 async function captureTab(fileKey) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  // Remove CSP for this tab so capture.js can load
+  await chrome.declarativeNetRequest.updateSessionRules({
+    removeRuleIds: [1],
+    addRules: [{
+      id: 1,
+      priority: 1,
+      action: {
+        type: "modifyHeaders",
+        responseHeaders: [
+          { header: "Content-Security-Policy", operation: "remove" },
+          { header: "Content-Security-Policy-Report-Only", operation: "remove" },
+        ],
+      },
+      condition: {
+        tabIds: [tab.id],
+        resourceTypes: ["main_frame"],
+      },
+    }],
+  });
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
     func: (hash) => {
-      const id = "figma-html-to-design-capture";
-      if (!document.getElementById(id)) {
-        const s = document.createElement("script");
-        s.id = id;
-        s.src = "https://mcp.figma.com/mcp/html-to-design/capture.js";
-        s.async = true;
-        document.head.appendChild(s);
-      }
       location.hash = hash;
       location.reload();
     },
@@ -46,10 +57,10 @@ async function captureTab(fileKey) {
 
 async function clearHash() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [1] });
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    func: (cleanFn) => {
-      // cleanHash is inlined since func runs in page context
+    func: () => {
       const cleaned = location.hash
         .replace(/[#&]?figmacapture=[^&]*/g, "")
         .replace(/[#&]?figmaselector=[^&]*/g, "")
