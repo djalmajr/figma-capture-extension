@@ -10,4 +10,5 @@ await Bun.build({
 // Copy static files
 copyFileSync("manifest.json", "dist/manifest.json");
 copyFileSync("popup.html", "dist/popup.html");
+copyFileSync("src/capture.js", "dist/capture.js");
 cpSync("icons", "dist/icons", { recursive: true });

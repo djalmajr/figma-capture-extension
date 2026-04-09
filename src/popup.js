@@ -25,25 +25,6 @@ async function saveKeys(keys, activeKeyId) {
 // --- Capture ---
 async function captureTab(fileKey) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  // Remove CSP for this tab so capture.js can load
-  await chrome.declarativeNetRequest.updateSessionRules({
-    removeRuleIds: [1],
-    addRules: [{
-      id: 1,
-      priority: 1,
-      action: {
-        type: "modifyHeaders",
-        responseHeaders: [
-          { header: "Content-Security-Policy", operation: "remove" },
-          { header: "Content-Security-Policy-Report-Only", operation: "remove" },
-        ],
-      },
-      condition: {
-        tabIds: [tab.id],
-        resourceTypes: ["main_frame"],
-      },
-    }],
-  });
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
     func: (hash) => {
@@ -57,7 +38,6 @@ async function captureTab(fileKey) {
 
 async function clearHash() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [1] });
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
     func: () => {

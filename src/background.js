@@ -28,15 +28,7 @@ async function injectCaptureScript(tabId) {
     await chrome.scripting.executeScript({
       target: { tabId },
       world: "MAIN",
-      func: () => {
-        if (!document.getElementById("figma-html-to-design-capture")) {
-          const s = document.createElement("script");
-          s.id = "figma-html-to-design-capture";
-          s.src = "https://mcp.figma.com/mcp/html-to-design/capture.js";
-          s.async = true;
-          document.head.appendChild(s);
-        }
-      },
+      files: ["capture.js"],
     });
   } catch (e) { console.warn("injectCaptureScript:", e); }
 }
